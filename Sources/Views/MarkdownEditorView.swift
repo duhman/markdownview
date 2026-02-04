@@ -72,8 +72,11 @@ struct MarkdownEditorView: NSViewRepresentable {
             textView.string = text
             
             // Restore selection if valid
-            if selectedRange.location <= text.count {
-                textView.setSelectedRange(selectedRange)
+            let length = text.utf16.count
+            if length >= 0 {
+                let clampedLocation = min(selectedRange.location, length)
+                let clampedLength = min(selectedRange.length, max(0, length - clampedLocation))
+                textView.setSelectedRange(NSRange(location: clampedLocation, length: clampedLength))
             }
         }
     }

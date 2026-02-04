@@ -3,6 +3,7 @@ import SwiftUI
 struct MarkdownPreviewView: View {
     let text: String
     @State private var attributedContent: AttributedString?
+    @State private var parseTask: Task<Void, Never>?
     
     var body: some View {
         ScrollView {
@@ -24,20 +25,32 @@ struct MarkdownPreviewView: View {
         .onChange(of: text) { _, _ in
             parseMarkdown()
         }
+        .onDisappear {
+            parseTask?.cancel()
+            parseTask = nil
+        }
     }
     
     private func parseMarkdown() {
-        do {
-            var options = AttributedString.MarkdownParsingOptions()
-            options.interpretedSyntax = .inlineOnlyPreservingWhitespace
-            
-            let attributed = try AttributedString(
-                markdown: text,
-                options: options
-            )
-            attributedContent = attributed
-        } catch {
-            attributedContent = nil
+        let currentText = text
+        parseTask?.cancel()
+        parseTask = Task.detached(priority: .userInitiated) {
+            let attributed: AttributedString?
+            do {
+                var options = AttributedString.MarkdownParsingOptions()
+                options.interpretedSyntax = .full
+                options.failurePolicy = .returnPartiallyParsedIfPossible
+                attributed = try AttributedString(
+                    markdown: currentText,
+                    options: options
+                )
+            } catch {
+                attributed = nil
+            }
+            await MainActor.run {
+                guard !Task.isCancelled else { return }
+                attributedContent = attributed
+            }
         }
     }
 }

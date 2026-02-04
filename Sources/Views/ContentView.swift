@@ -2,23 +2,20 @@ import SwiftUI
 
 struct ContentView: View {
     @Binding var document: MarkdownDocument
-    @State private var showPreview = false
-    @State private var editorFrame: CGRect = .zero
+    @SceneStorage("showPreview") private var showPreview = false
     
     var body: some View {
-        GeometryReader { geometry in
-            HSplitView {
-                // Editor pane
-                MarkdownEditorView(text: $document.text)
+        HSplitView {
+            // Editor pane
+            MarkdownEditorView(text: $document.text)
+                .frame(minWidth: 300)
+                .background(Color(NSColor.textBackgroundColor))
+            
+            // Preview pane (conditional)
+            if showPreview {
+                MarkdownPreviewView(text: document.text)
                     .frame(minWidth: 300)
                     .background(Color(NSColor.textBackgroundColor))
-                
-                // Preview pane (conditional)
-                if showPreview {
-                    MarkdownPreviewView(text: document.text)
-                        .frame(minWidth: 300)
-                        .background(Color(NSColor.textBackgroundColor))
-                }
             }
         }
         .frame(minWidth: 600, minHeight: 400)

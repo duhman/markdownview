@@ -16,6 +16,8 @@ APP_BUNDLE="$APP_NAME.app"
 CONTENTS="$APP_BUNDLE/Contents"
 MACOS_DIR="$CONTENTS/MacOS"
 RESOURCES_DIR="$CONTENTS/Resources"
+ENTITLEMENTS_FILE="$(mktemp -t markdownview.entitlements.XXXXXX)"
+trap 'rm -f "$ENTITLEMENTS_FILE"' EXIT
 
 echo "Building $APP_NAME ($CONFIG) for: $ARCHES"
 
@@ -118,13 +120,13 @@ cat > "$CONTENTS/Info.plist" << 'EOF'
 EOF
 
 # Create entitlements
-cat > /tmp/entitlements.plist << 'EOF'
+cat > "$ENTITLEMENTS_FILE" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>com.apple.security.app-sandbox</key>
-    <false/>
+    <true/>
     <key>com.apple.security.files.user-selected.read-write</key>
     <true/>
 </dict>
@@ -133,7 +135,7 @@ EOF
 
 # Clear extended attributes and sign
 xattr -cr "$APP_BUNDLE"
-codesign --force --deep --sign - --entitlements /tmp/entitlements.plist "$APP_BUNDLE"
+codesign --force --deep --sign - --entitlements "$ENTITLEMENTS_FILE" "$APP_BUNDLE"
 
 echo "Created: $APP_BUNDLE"
 
