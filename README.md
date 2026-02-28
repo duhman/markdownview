@@ -7,7 +7,9 @@ A native, blazing-fast macOS Markdown editor built with SwiftUI and NSTextView. 
 - **Extreme Performance**: Direct NSTextView integration via NSViewRepresentable for maximum editing performance
 - **Native Document Architecture**: DocumentGroup with FileDocument protocol for native document handling
 - **Split View Layout**: Editor on left, preview on right with draggable divider
-- **Manual Preview Toggle**: No live preview overhead - toggle when needed for performance
+- **Debounced Block-Aware Preview**: Preview updates after a short idle delay to keep typing responsive
+- **Structured Markdown Rendering**: Headings, lists, blockquotes, code fences, and table-like rows are rendered with block-aware styling
+- **Defensive Layout Fallback**: Automatically falls back to source-preserving preview when rendered output collapses line breaks
 - **Large File Support**: Handles files up to 10MB effortlessly with native text engine
 - **Zero Dependencies**: Pure Apple frameworks (SwiftUI, AppKit, Foundation)
 - **File Associations**: Native support for .md, .markdown, .mdown extensions
@@ -67,6 +69,16 @@ swift build -c release
 swift run
 ```
 
+## ✅ Testing
+
+```bash
+# Run all tests
+swift test
+
+# Run preview-specific tests
+swift test --filter MarkdownPreviewStateTests
+```
+
 ## 🎯 Setting as Default Markdown App
 
 ### Option 1: Right-Click (Per File)
@@ -84,12 +96,6 @@ brew install duti
 duti -s com.bigmac.markdownview net.daringfireball.markdown all
 ```
 
-### Option 3: System Settings
-1. Open **System Settings**
-2. Navigate to **Desktop & Dock**
-3. Scroll to **Default web browser** (macOS uses this for document handlers too)
-4. Select **MarkdownView**
-
 ## 🏗️ Architecture
 
 ### Design Decisions
@@ -99,7 +105,7 @@ duti -s com.bigmac.markdownview net.daringfireball.markdown all
 | **Build System** | Swift Package Manager | No Xcode project, CI/CD friendly, reproducible builds |
 | **UI Framework** | SwiftUI + DocumentGroup | Native document-based architecture, modern declarative UI |
 | **Text Engine** | NSTextView via NSViewRepresentable | Maximum performance, handles large files effortlessly |
-| **Preview Engine** | AttributedString with Markdown | Native SwiftUI rendering, no web views |
+| **Preview Engine** | `MarkdownPreviewState` + `AttributedString` Markdown | Debounced parsing with block-aware rendering and collapse-detection fallback |
 | **Document Model** | FileDocument | SwiftUI's native document protocol, automatic save/open |
 | **Layout** | HSplitView | Native macOS split view with draggable divider |
 
@@ -118,9 +124,21 @@ markdownview/
 │   └── Views/
 │       ├── ContentView.swift        # Main split view interface
 │       ├── MarkdownEditorView.swift # NSTextView NSViewRepresentable bridge
-│       └── MarkdownPreviewView.swift # AttributedString markdown preview
+│       ├── MarkdownPreviewState.swift # Debounced parser + block-aware render logic
+│       └── MarkdownPreviewView.swift # Preview UI + status/fallback banners
+├── Tests/
+│   └── MarkdownViewAppTests/
+│       ├── MarkdownDocumentTests.swift
+│       └── MarkdownPreviewStateTests.swift
 └── MarkdownView.app                 # Built app bundle
 ```
+
+### Markdown Compatibility
+
+- Markdown parsing is powered by Apple Foundation `AttributedString` Markdown APIs.
+- Preview rendering is block-aware for readability and uses inline markdown parsing per line to preserve source structure.
+- If parser output appears structurally collapsed (for example lost line breaks), preview automatically falls back to source-preserving plain text.
+- This app prioritizes native performance and readability over exact GitHub HTML parity for every markdown edge case.
 
 ## ⌨️ Keyboard Shortcuts
 
@@ -175,6 +193,13 @@ xattr -cr MarkdownView.app
 1. Check **System Settings > Privacy & Security > Files and Folders**
 2. Ensure MarkdownView has access to the folder containing your files
 3. Try opening via **File > Open** menu instead of double-click
+
+### Preview Looks Unexpected
+
+1. Confirm you are running the latest installed app at `/Applications/MarkdownView.app`
+2. Rebuild and reinstall: `./build_app.sh release --install`
+3. Relaunch the app after install to refresh LaunchServices cache
+4. Run `swift test --filter MarkdownPreviewStateTests` to verify preview pipeline checks
 
 ### Build Errors
 

@@ -17,6 +17,11 @@ let package = Package(
         .executableTarget(
             name: "MarkdownViewApp",
             path: "Sources"
+        ),
+        .testTarget(
+            name: "MarkdownViewAppTests",
+            dependencies: ["MarkdownViewApp"],
+            path: "Tests/MarkdownViewAppTests"
         )
     ]
 )

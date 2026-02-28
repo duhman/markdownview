@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Binding var document: MarkdownDocument
+    let fileURL: URL?
     @SceneStorage("showPreview") private var showPreview = false
     
     var body: some View {
@@ -13,7 +14,10 @@ struct ContentView: View {
             
             // Preview pane (conditional)
             if showPreview {
-                MarkdownPreviewView(text: document.text)
+                MarkdownPreviewView(
+                    text: document.text,
+                    baseURL: fileURL?.deletingLastPathComponent()
+                )
                     .frame(minWidth: 300)
                     .background(Color(NSColor.textBackgroundColor))
             }

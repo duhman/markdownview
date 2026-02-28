@@ -4,17 +4,14 @@ import UniformTypeIdentifiers
 struct MarkdownDocument: FileDocument {
     var text: String
     
-    private static let markdownExtensions = ["md", "markdown", "mdown"]
-    private static let markdownTypes: [UTType] = markdownExtensions.compactMap {
-        UTType(filenameExtension: $0, conformingTo: .plainText)
-    }
+    private static let markdownType = UTType(importedAs: "net.daringfireball.markdown")
     
     static var readableContentTypes: [UTType] {
-        markdownTypes + [.plainText]
+        [markdownType, .plainText]
     }
     
     static var writableContentTypes: [UTType] {
-        markdownTypes + [.plainText]
+        [markdownType, .plainText]
     }
     
     init(text: String = "") {
