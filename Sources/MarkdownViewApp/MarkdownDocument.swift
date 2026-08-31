@@ -7,11 +7,11 @@ struct MarkdownDocument: FileDocument {
     private static let markdownType = UTType(importedAs: "net.daringfireball.markdown")
     
     static var readableContentTypes: [UTType] {
-        [markdownType, .plainText]
+        [markdownType, .plainText, .text]
     }
     
     static var writableContentTypes: [UTType] {
-        [markdownType, .plainText]
+        [markdownType, .plainText, .text]
     }
     
     init(text: String = "") {

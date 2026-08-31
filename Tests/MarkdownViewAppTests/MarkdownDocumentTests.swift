@@ -11,6 +11,8 @@ final class MarkdownDocumentTests: XCTestCase {
 
         XCTAssertTrue(MarkdownDocument.readableContentTypes.contains(.plainText))
         XCTAssertTrue(MarkdownDocument.writableContentTypes.contains(.plainText))
+        XCTAssertTrue(MarkdownDocument.readableContentTypes.contains(.text))
+        XCTAssertTrue(MarkdownDocument.writableContentTypes.contains(.text))
     }
 
     func testReadWriteRoundTripPreservesMarkdownText() throws {

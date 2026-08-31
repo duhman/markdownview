@@ -9,7 +9,7 @@ A personal, native macOS viewer for local Markdown files. Built with SwiftUI and
 - **GFM tables and images**: Relative images resolve from the file's directory via `baseURL`
 - **Debounced preview**: Preview updates after a short idle delay while you edit
 - **Optional editor**: Toggle the plain-text editor pane when you need to tweak source
-- **Large file support**: Handles files up to 10MB with native text engine
+- **Preview size limit**: Full markdown rendering up to ~1 MB; larger files use faster inline-only parsing (see Markdown Compatibility)
 - **Zero dependencies**: Pure Apple frameworks (SwiftUI, AppKit, Foundation)
 - **File associations**: Native support for `.md`, `.markdown`, `.mdown` extensions
 - **Dark mode**: Automatic system appearance support
@@ -136,7 +136,7 @@ markdownview/
 
 - Markdown parsing uses Apple Foundation `AttributedString` Markdown APIs (full syntax by default).
 - Relative image and link URLs resolve against the opened file's directory.
-- Very large files (>1 MB) fall back to inline-only parsing to keep preview responsive.
+- Very large files (>1 MB UTF-8) fall back to inline-only parsing to keep preview responsive; tables may not render in that mode.
 - Plain-text fallback is reserved for parse failures, not for documents containing tables or images.
 
 ## Keyboard Shortcuts
@@ -189,9 +189,12 @@ xattr -cr MarkdownView.app
 
 ### Markdown Files Not Opening
 
-1. Check **System Settings > Privacy & Security > Files and Folders**
-2. Ensure MarkdownView has access to the folder containing your files
-3. Try opening via **File > Open** menu instead of double-click
+1. Rebuild the app bundle so `Info.plist` document types and entitlements are applied: `./build_app.sh release --install`
+2. Relaunch MarkdownView after install (LaunchServices caches handler metadata)
+3. Check **System Settings > Privacy & Security > Files and Folders** if a specific folder still blocks access
+4. Use **Open With > MarkdownView** once if the file’s type is `public.plain-text` rather than `net.daringfireball.markdown`
+
+Double-click and **File > Open** both grant sandbox access via `com.apple.security.files.user-selected.read-write`; the bundled app declares handlers for `net.daringfireball.markdown` and extension-scoped `public.plain-text`.
 
 ### Preview Looks Unexpected
 
