@@ -43,7 +43,6 @@ final class MarkdownPreviewStateTests: XCTestCase {
         XCTAssertTrue(visibleText.contains("Heading"))
         XCTAssertFalse(visibleText.contains("# Heading"))
         XCTAssertTrue(visibleText.contains("Item 1"))
-        XCTAssertTrue(visibleText.contains("• Item 1"))
         XCTAssertTrue(visibleText.contains("let x = 1"))
         XCTAssertTrue(visibleText.contains("Example"))
 
@@ -61,6 +60,44 @@ final class MarkdownPreviewStateTests: XCTestCase {
             }
         }
         XCTAssertTrue(foundLink)
+    }
+
+    @MainActor
+    func testImagesAndTablesRenderWithoutPlainTextFallback() async throws {
+        let markdown = """
+        ![Logo](./logo.png)
+
+        | Col A | Col B |
+        | ----- | ----- |
+        | one   | two   |
+        """
+
+        let state = MarkdownPreviewState(debounceNanoseconds: 0)
+        let baseURL = URL(fileURLWithPath: "/tmp/markdown-preview-tests")
+        state.scheduleParse(text: markdown, baseURL: baseURL)
+
+        let finalState = await waitForState(in: state) {
+            if case .rendered = $0 {
+                return true
+            }
+            return false
+        }
+
+        guard case let .rendered(attributed, diagnostics) = finalState else {
+            return XCTFail("Expected rendered markdown state, not plain-text fallback.")
+        }
+
+        XCTAssertTrue(diagnostics.containsImageSyntax)
+        XCTAssertTrue(diagnostics.containsTableSyntax)
+
+        let visibleText = String(attributed.characters)
+        XCTAssertTrue(visibleText.contains("one"))
+        XCTAssertTrue(visibleText.contains("two"))
+        XCTAssertFalse(visibleText.contains("| Col A | Col B |"))
+
+        let urlValues = collectedMarkdownURLValues(attributed)
+        XCTAssertTrue(urlValues.contains { $0.contains("logo.png") })
+        XCTAssertTrue(urlValues.contains { $0.contains("file:///tmp/markdown-preview-tests") })
     }
 
     @MainActor

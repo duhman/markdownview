@@ -1,21 +1,20 @@
 # MarkdownView
 
-A native, blazing-fast macOS Markdown editor built with SwiftUI and NSTextView. Designed for developers who appreciate clean code, native performance, and modern macOS architecture.
+A personal, native macOS viewer for local Markdown files. Built with SwiftUI and AppKit — open a `.md` file and read the rendered preview. No Electron, no bloat.
 
-## ✨ Features
+## Features
 
-- **Extreme Performance**: Direct NSTextView integration via NSViewRepresentable for maximum editing performance
-- **Native Document Architecture**: DocumentGroup with FileDocument protocol for native document handling
-- **Split View Layout**: Editor on left, preview on right with draggable divider
-- **Debounced Block-Aware Preview**: Preview updates after a short idle delay to keep typing responsive
-- **Structured Markdown Rendering**: Headings, lists, blockquotes, code fences, and table-like rows are rendered with block-aware styling
-- **Defensive Layout Fallback**: Automatically falls back to source-preserving preview when rendered output collapses line breaks
-- **Large File Support**: Handles files up to 10MB effortlessly with native text engine
-- **Zero Dependencies**: Pure Apple frameworks (SwiftUI, AppKit, Foundation)
-- **File Associations**: Native support for .md, .markdown, .mdown extensions
-- **Dark Mode**: Automatic system appearance support
+- **Viewer-first**: Opening a file shows the rendered preview; the source editor is hidden until you toggle it
+- **Native Document Architecture**: DocumentGroup with FileDocument for standard open/save via the File menu
+- **GFM tables and images**: Relative images resolve from the file's directory via `baseURL`
+- **Debounced preview**: Preview updates after a short idle delay while you edit
+- **Optional editor**: Toggle the plain-text editor pane when you need to tweak source
+- **Preview size limit**: Full markdown rendering up to ~1 MB; larger files use faster inline-only parsing (see Markdown Compatibility)
+- **Zero dependencies**: Pure Apple frameworks (SwiftUI, AppKit, Foundation)
+- **File associations**: Native support for `.md`, `.markdown`, `.mdown` extensions
+- **Dark mode**: Automatic system appearance support
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Clone the repository
@@ -32,13 +31,13 @@ cd markdownview
 open MarkdownView.app
 ```
 
-## 📋 Requirements
+## Requirements
 
 - **macOS**: 15.0+ (Sequoia)
 - **Swift**: 6.1+
 - **Xcode**: 16.0+ (Command Line Tools)
 
-## 🛠️ Building from Source
+## Building from Source
 
 ### One-Command Build
 
@@ -69,7 +68,7 @@ swift build -c release
 swift run
 ```
 
-## ✅ Testing
+## Testing
 
 ```bash
 # Run all tests
@@ -79,10 +78,10 @@ swift test
 swift test --filter MarkdownPreviewStateTests
 ```
 
-## 🎯 Setting as Default Markdown App
+## Setting as Default Markdown App
 
 ### Option 1: Right-Click (Per File)
-1. Right-click any Markdown file (.md, .markdown, .mdown)
+1. Right-click any Markdown file (`.md`, `.markdown`, `.mdown`)
 2. Select **Get Info** (⌘+I)
 3. Under **Open with:**, select **MarkdownView**
 4. Click **Change All...** to apply to all Markdown files
@@ -96,7 +95,7 @@ brew install duti
 duti -s com.bigmac.markdownview net.daringfireball.markdown all
 ```
 
-## 🏗️ Architecture
+## Architecture
 
 ### Design Decisions
 
@@ -104,10 +103,10 @@ duti -s com.bigmac.markdownview net.daringfireball.markdown all
 |-----------|-----------|-----------|
 | **Build System** | Swift Package Manager | No Xcode project, CI/CD friendly, reproducible builds |
 | **UI Framework** | SwiftUI + DocumentGroup | Native document-based architecture, modern declarative UI |
-| **Text Engine** | NSTextView via NSViewRepresentable | Maximum performance, handles large files effortlessly |
-| **Preview Engine** | `MarkdownPreviewState` + `AttributedString` Markdown | Debounced parsing with block-aware rendering and collapse-detection fallback |
+| **Text Engine** | NSTextView via NSViewRepresentable | Optional editor pane for source editing |
+| **Preview Engine** | `MarkdownPreviewState` + `AttributedString` Markdown | Debounced full-markdown parsing with relative URL resolution |
 | **Document Model** | FileDocument | SwiftUI's native document protocol, automatic save/open |
-| **Layout** | HSplitView | Native macOS split view with draggable divider |
+| **Layout** | HSplitView | Preview by default; optional editor pane |
 
 ### Project Structure
 
@@ -122,10 +121,10 @@ markdownview/
 │   │   ├── MarkdownViewApp.swift    # @main App entry point
 │   │   └── MarkdownDocument.swift   # FileDocument implementation
 │   └── Views/
-│       ├── ContentView.swift        # Main split view interface
-│       ├── MarkdownEditorView.swift # NSTextView NSViewRepresentable bridge
-│       ├── MarkdownPreviewState.swift # Debounced parser + block-aware render logic
-│       └── MarkdownPreviewView.swift # Preview UI + status/fallback banners
+│       ├── ContentView.swift        # Viewer-first split view
+│       ├── MarkdownEditorView.swift # Optional NSTextView editor pane
+│       ├── MarkdownPreviewState.swift # Debounced parser + render logic
+│       └── MarkdownPreviewView.swift # Preview UI + status banners
 ├── Tests/
 │   └── MarkdownViewAppTests/
 │       ├── MarkdownDocumentTests.swift
@@ -135,23 +134,23 @@ markdownview/
 
 ### Markdown Compatibility
 
-- Markdown parsing is powered by Apple Foundation `AttributedString` Markdown APIs.
-- Preview rendering is block-aware for readability and uses inline markdown parsing per line to preserve source structure.
-- If parser output appears structurally collapsed (for example lost line breaks), preview automatically falls back to source-preserving plain text.
-- This app prioritizes native performance and readability over exact GitHub HTML parity for every markdown edge case.
+- Markdown parsing uses Apple Foundation `AttributedString` Markdown APIs (full syntax by default).
+- Relative image and link URLs resolve against the opened file's directory.
+- Very large files (>1 MB UTF-8) fall back to inline-only parsing to keep preview responsive; tables may not render in that mode.
+- Plain-text fallback is reserved for parse failures, not for documents containing tables or images.
 
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
 | `⌘+O` | Open Markdown file |
-| `⌘+S` | Save document |
+| `⌘+S` | Save document (File menu) |
 | `⌘+W` | Close window |
 | `⌘+Q` | Quit app |
 | `⌘+N` | New document |
-| Toolbar Eye Icon | Toggle preview pane |
+| Toolbar Editor Icon | Toggle source editor pane |
 
-## 📦 Distribution
+## Distribution
 
 ### Local Installation
 
@@ -177,7 +176,7 @@ The built `MarkdownView.app` is self-contained and can be:
 1. Right-click the app and select **Open** (first launch only)
 2. Or run: `xattr -cr MarkdownView.app` to remove quarantine
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### App Won't Open
 
@@ -190,9 +189,12 @@ xattr -cr MarkdownView.app
 
 ### Markdown Files Not Opening
 
-1. Check **System Settings > Privacy & Security > Files and Folders**
-2. Ensure MarkdownView has access to the folder containing your files
-3. Try opening via **File > Open** menu instead of double-click
+1. Rebuild the app bundle so `Info.plist` document types and entitlements are applied: `./build_app.sh release --install`
+2. Relaunch MarkdownView after install (LaunchServices caches handler metadata)
+3. Check **System Settings > Privacy & Security > Files and Folders** if a specific folder still blocks access
+4. Use **Open With > MarkdownView** once if the file’s type is `public.plain-text` rather than `net.daringfireball.markdown`
+
+Double-click and **File > Open** both grant sandbox access via `com.apple.security.files.user-selected.read-write`; the bundled app declares handlers for `net.daringfireball.markdown` and extension-scoped `public.plain-text`.
 
 ### Preview Looks Unexpected
 
@@ -212,16 +214,16 @@ rm -rf .build/
 ./build_app.sh
 ```
 
-## 📝 License
+## License
 
 MIT License - See [LICENSE](LICENSE) file for details.
 
 This is a personal project by [@duhman](https://github.com/duhman).
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with Apple's [AppKit](https://developer.apple.com/documentation/appkit) and [SwiftUI](https://developer.apple.com/documentation/swiftui) frameworks
-- Uses native NSTextView for extreme editing performance
+- Uses native NSTextView for the optional source editor
 - Inspired by the macOS document-based app paradigm
 
 ---
